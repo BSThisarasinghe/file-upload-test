@@ -12,6 +12,7 @@ import {
     LogoutOutlined
 } from '@ant-design/icons';
 import { Breadcrumb, Layout, Menu, Form, Input, Button, message, Upload, Spin } from 'antd';
+import JSZip from 'jszip';
 const { Header, Content, Footer, Sider } = Layout;
 
 const { Dragger } = Upload;
@@ -20,6 +21,7 @@ const Dashboard = () => {
 
     const [collapsed, setCollapsed] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [file, setFile] = useState(null);
     const [imageUrl, setImageUrl] = useState();
 
     const dummyRequest = ({ file, onSuccess }) => {
@@ -29,7 +31,9 @@ const Dashboard = () => {
     };
 
     const onUploadDoc = (info) => {
+        var zip = new JSZip();
         console.log("File", info.file);
+
         if (info.file.status === 'uploading') {
             console.log("File 2");
             setLoading(true);
@@ -39,6 +43,20 @@ const Dashboard = () => {
         if (info.file.status === 'done') {
             console.log("File 3");
             setLoading(false);
+            zip.loadAsync(info.file.originFileObj).then((response) => {
+                console.log("Extracted", response.files);
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let text = JSON.parse(e.target.result);
+                    console.log("Extracted text", text);
+                    let obj = {
+                        fileName: 'test.json',
+                        body: text
+                    }
+                    setFile(obj);
+                };
+                reader.readAsText(new Blob([JSON.stringify(response.files)], { type: 'application/json' }));
+            });
             return;
             // Get this url from response in real world.
             //   getBase64(info.file.originFileObj, (url) => {
@@ -48,16 +66,20 @@ const Dashboard = () => {
         }
     }
 
-    const onFinishForm = () => {
-        //     uploadFile(req).then((response) => {
-        //         if (response.status === 201) {
-        //             message.success('You have successfully signed up.');
-        //             history.push('/signin');
-        //         }
-        //     }).catch((error) => {
-        //         console.log('error:', error);
-        //         message.error('Oops, error occured while loggin in. Please try again');
-        //     });
+    const onFinishForm = (values) => {
+        let req = {
+            name: values,
+            file: file
+        }
+        uploadFile(req).then((response) => {
+            if (response.status === 201) {
+                message.success('You have successfully signed up.');
+                history.push('/signin');
+            }
+        }).catch((error) => {
+            console.log('error:', error);
+            message.error('Oops, error occured while loggin in. Please try again');
+        });
     }
 
     const onPressLogout = () => {
