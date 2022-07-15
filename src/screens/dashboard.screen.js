@@ -1,7 +1,7 @@
 import Salary from '../assets/images/logo512.png';
 import { uploadFile } from '../services';
 import React, { useState, useEffect } from 'react';
-import { Link } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
 import {
     DesktopOutlined,
     FileOutlined,
@@ -23,6 +23,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
     const [imageUrl, setImageUrl] = useState();
+    const history = useHistory();
 
     const dummyRequest = ({ file, onSuccess }) => {
         setTimeout(() => {
