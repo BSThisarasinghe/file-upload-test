@@ -44,19 +44,28 @@ const Dashboard = () => {
         if (info.file.status === 'done') {
             console.log("File 3");
             setLoading(false);
-            zip.loadAsync(info.file.originFileObj).then((response) => {
+            zip.loadAsync(info.file.originFileObj).then(async (response) => {
                 console.log("Extracted", response.files);
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let text = JSON.parse(e.target.result);
-                    console.log("Extracted text", text);
-                    let obj = {
-                        fileName: 'test.json',
-                        body: text
-                    }
-                    setFile(obj);
-                };
-                reader.readAsText(new Blob([JSON.stringify(response.files)], { type: 'application/json' }));
+
+                for (let filename in response.files) {
+                    // if (!response.files.hasOwnProperty(filename)) {
+                    //     continue;
+                    // }
+                    // Object key is the filename
+                    var match = filename.match(/REGEX.json$/);
+                    // if (match) {
+                        var blob = await zip.file(filename).async("blob");
+                        var file = new File([blob], filename, { type: 'application/json' });
+                        //    flist.push(file);
+                        let reader = new FileReader();
+                        reader.onload = (e) => {
+                            let text = e.target.result;
+                            console.log("Extracted text", text);
+                            setFile(text);
+                        };
+                        reader.readAsText(file);
+                    // }
+                }
             });
             return;
             // Get this url from response in real world.
@@ -69,9 +78,10 @@ const Dashboard = () => {
 
     const onFinishForm = (values) => {
         let req = {
-            name: values,
+            name: `${values.name}.json`,
             file: file
         }
+        console.log("#############", req);
         uploadFile(req).then((response) => {
             if (response.status === 201) {
                 message.success('You have successfully signed up.');
